@@ -1,0 +1,76 @@
+---
+title: "Assignment_1"
+author: "Gavin Jones"
+date: "2026-09-12"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+## This assignment used a Sports Engagement Dataeet from Kaggle from Vision Langai. The dataset contains roughly 50,000 observations and 14 variables that capture interactions with sports. The quentattive variables for this dataset include age, television hours watched, social media sports time, and engagement score. The categorical variables for this are gender, education level, sport type, and engagement type. 
+
+## https://www.kaggle.com/datasets/visionlangai/sports-engagement-dataset?resource=download
+
+
+## Load the Dataset
+
+```{r}
+sports <- read.csv("~/Downloads/Sports Engagement.csv")
+
+head(sports)
+```
+
+## Numerical Variables
+```{r}
+summary (sports$Age)
+summary (sports$TV_Watching_Hours_Per_Week)
+summary (sports$Engagement_Score)
+
+mean(sports$Age)
+sd (sports$Age)
+mean (sports$Engagement_Score)
+```
+
+## Categorical Variables
+```{r}
+table(sports$Gender)
+table(sports$Sports_Type)
+table(sports$Engagement_Type)
+table(sports$Education_Level)
+```
+## The datset is split almost evenly between male and female responses. The most common engagement type is Traditional, and education level is veryc similar all around with all degree types having roughly 12,000 respondants each. 
+
+```{r}
+sports$Age_Group <- ifelse (sports$Age < 30, "Under 30", 
+                            ifelse(sports$Age < 50, "30-49", "50 and Older"))
+
+table (sports$Age_Group)
+```
+## With this I made the Quantatative Variable of Age into a Categorical Variable of Age using 3 different groups being "Under 30", "30-49", and "50 and older." With this transformation it will be easier to compare the engagement across different age ranges. 
+
+```{r}
+hist (sports$Engagement_Score, 
+      main = "Distribution of Sports Engagement Scores", 
+      xlab = "Engagement Score")
+```
+## This graph shows the distribution of sports engagement scores among the respondants. It allows viewers to see where engagement scores are most common and any super high or low scores. 
+## Based on the graph most people seem to score between 40 and 80 on engagement with the nmost being right around 55. 
+
+```{r}
+plot (sports$Social_Media_Sports_Time_Per_Day, 
+      sports$Engagement_Score, 
+      main = "Social Media Sports Time vs Engagement Score", 
+      xlab = "Social Media Sports Time Per Day",
+      ylab = "Engagement Score",
+      pch = 16, 
+      cex = 0.3, 
+      col = rgb (0, 1, 0.5, 0.12))
+```
+## This plot explains whether spending more time on Sports Media actually relates to a higher overall engagement score or not. 
+## This plot shows that there is a coorelation between time spent on sports social media and a higher engagement score, as the graph showcased a slight upward trend to the right progressively. 
