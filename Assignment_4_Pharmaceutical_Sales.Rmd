@@ -1,0 +1,154 @@
+---
+title: "Assignment_4_Pharmaceutical_Sales"
+author: "Gavin Jones"
+date: "2026-10-22"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Import the pharmaceutical dataset
+pharma <- read.csv("~/Downloads/Pharmaceuticals.csv")
+
+# View the data
+head(pharma)
+
+# Examine dataset structure
+str(pharma)
+
+# Display summary statistics
+summary(pharma)
+```
+
+```{r}
+# Select the 9 numerical financial variables
+pharma_numeric <- pharma[, 3:11]
+
+# View the selected data
+head(pharma_numeric)
+
+# Standardize the financial variables
+pharma_scaled <- scale(pharma_numeric)
+
+# View standardized values
+head(pharma_scaled)
+```
+### All nine variables were standardized, giving them equal weighting for the squared Euclidean distance. This is important as market cap is measured in Billions, where as other variables such as Beta and Asset Turnover are significantly smaller, which would have skewed the influence from market cap on the Euclidean Distance. 
+```{r}
+# Calculate Euclidean distances
+pharma_dist <- dist(pharma_scaled, method = "euclidean")
+
+```
+```{r}
+# Perform hierarchical clustering using Ward's method
+pharma_hc <- hclust(pharma_dist, method = "ward.D2")
+
+# Create dendrogram
+plot(pharma_hc,
+     labels = pharma$Name,
+     main = "Hierarchical Clustering of Pharmaceutical Firms",
+     xlab = "Pharmaceutical Companies",
+     ylab = "Distance",
+     cex = 0.6)
+
+# Highlight 3 clusters
+rect.hclust(pharma_hc, k = 3, border = "turquoise")
+```
+
+```{r}
+library(cluster)
+
+# Calculate silhouette scores for 2 through 6 clusters
+sil_scores <- sapply(2:6, function(k) {
+  clusters <- cutree(pharma_hc, k = k)
+  sil <- silhouette(clusters, pharma_dist)
+  mean(sil[, 3])
+})
+
+# Compare scores
+data.frame(
+  Number_of_Clusters = 2:6,
+  Average_Silhouette = round(sil_scores, 3)
+)
+
+# Plot silhouette scores
+plot(2:6, sil_scores,
+     type = "b",
+     pch = 19,
+     xlab = "Number of Clusters",
+     ylab = "Average Silhouette Score",
+     main = "Selecting the Number of Clusters")
+```
+# Part A
+### For this Analysis, nine numerical financial variables were used and standardized with Z-scores to give equal weighting. The Euclidean Distance was then calculated and used to perform hierarchical clustering using Wards Method. This grouped the companies by minimizing increased within-cluster variation. A dendrogram was created to determine the appropriate number oc clusters, with the best coming to be 3 clusters, despite being 0.003 below 2, to give more meaningful insights into the financial distinctions in these companies. These companies were grouped into the three clusters, which contained 11, 3, and 7 each respectively. Although the silhouette score being .27 indicates a weak relationship, three clusters given the best idea to explain the differences in financial structure of the companies. 
+
+```{r}
+# Assign each company to one of the 3 clusters
+pharma_clusters <- cutree(pharma_hc, k = 3)
+
+# Add cluster assignments to the original dataset
+pharma$Cluster <- pharma_clusters
+
+# Display number of companies in each cluster
+table(pharma$Cluster)
+
+# Calculate average financial values for each cluster
+cluster_summary <- aggregate(
+  pharma_numeric,
+  by = list(Cluster = pharma_clusters),
+  FUN = mean
+)
+
+# View results rounded to 2 decimal places
+print(round(cluster_summary, 2))
+```
+# Part B
+### There are 3 Clusters of Companies
+### Cluster contains 11 companies, with the highest average market cap of $97.11 billion, return on equity of 35.7%, return on assets of 14.95%, and net profit margin of 20.17%. These 11 companies have the highest asset turnover at 0.8 and lowest beta of 0.43. This suggests these companies are larger, more established with bigger profitability, and lower sensitivity to market movement. 
+### Cluster 2 is made of 3 companies that see the highest P/E ratio at 55.63, but the lowest return on equity, return on assets, and net profit margin at 10%, 4%, and 5% respectively. This suggests these companies have higher stock valuations, but weaker profitability. These 3 companies also have the lowest estimated revenue growth at 7%. 
+### Cluster 3 is made of 7 companies, with the lowest average market capitalization at $8.82 billion, but the highest estimated revenue growth of 21.14%, and financial leverage of 1.11. They see a middle ground of net profit margin and return on equity, with the lowest asset turnover at 0.54. These companies are likely smaller but could see strong growth. 
+
+### Overall, these clusters demonstrate differences in companies sizes, profitability, revenue, and financial leverage within the industry.
+
+```{r}
+# Analyst recommendations by cluster
+table(pharma$Cluster, pharma$Median_Recommendation)
+
+# Compare Headquarter Locations
+table(pharma$Cluster, pharma$Location)
+
+# Compare Stock Exchanges Used
+table(pharma$Cluster, pharma$Exchange)
+```
+```{r}
+# Create recommendation frequency table
+rec_table <- table(
+  pharma$Cluster,
+  pharma$Median_Recommendation
+)
+
+# Calculate percentages within each cluster
+round(prop.table(rec_table, margin = 1) * 100, 1)
+```
+# Part C
+
+### Frequency Tables were used to compare the analyst recommendations, headquarter locations, and stock exchanges across the clusters. 
+### Cluster 1 had the highest proportion of US-Based Companies with  8 of its 11 being headquartered in the States. Cluster 2 had a German and Canadian Company along with an American in its 3 companies. While Cluster 3 had a steady mix, with 3 International and 4 State headquartered companies shown. However, these locations did not show a pattern in seperating the Clusters. 
+### This cluster analysis showcased some patterns among the variables that were not used to form the clusters. Clusters 1 and 2 are largely held by hold recommendations, representing 54.5% and 66.7% of their companies. Cluster 3 had a high proportion of Buy recommendations at 57.1%, combined with Moderate and Strong. Cluster 3 also had the highest Sell recommendation at 28.6%.
+### Every company from Cluster 1 and 2 was listed on the NYSE, while Cluster 3 contained 1 company from NASDAQ and AMEX respectively, and 5 companies on the NYSE. Overall, the recommendations and listings from stock exchanges showed differences between the clusters in some ways, and headquarter locations did not give away much relevant information. 
+
+# Part D
+# Names for Each Cluster 
+# Cluster 1 - Blue Chips
+# Cluster 2 - Speculative Firms
+# Cluster 3 - High-Growth Firms
+
+### These names were chosen due to their current and expected performance. 
+### Cluster 1 has the highest average market cap, strongest profitability, as well as asset turnover. This means these are all likely blue chip corporations that are well known and established. 
+### Cluster 2 companies have the highest P/E ratios, but lowest profitability. They likely have high valuations but have not performed yet, making them Speculative Firms. 
+### Cluster 3 companies have low market cap, but see high estimated growth and leverage. These companies are expected to grow, and thus are called High-Growth Firms. 
+
+### Overall Conclusions : The Silhouette showcased that 3 Clusters is the Optimal Value for this evaluation. The 3 Clusters were built based on characteristics from given pharmaceutical companies. Although these clusters were not strongly separated given the silhouette score of 0.27, it still gives useful insights into how these companies differ in size, profitability, and growth expectations. 
